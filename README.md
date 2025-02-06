@@ -1,5 +1,5 @@
-# gundi-integration-action-runner
-Template repo for integration in Gundi v2.
+# gundi-integration-protrack
+Gundi connector for Protrack devices.
 
 ## Usage
 - Fork this repo
