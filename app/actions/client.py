@@ -57,7 +57,6 @@ def generate_md5_hash(input_string):
     return md5_hash.hexdigest()
 
 
-@stamina.retry(on=httpx.HTTPError, wait_initial=4.0, wait_jitter=5.0, wait_max=32.0)
 async def get_token(integration, base_url, auth):
     auth_url = f"{base_url}/authorization"
     async with httpx.AsyncClient(timeout=120) as session:
@@ -197,4 +196,3 @@ async def get_playback_observations(integration, base_url, config):
         parsed_obs = [PlaybackResponse.parse_obj(dict(zip(keys, obs))) for obs in extracted_obs]
 
         return parsed_obs
-
