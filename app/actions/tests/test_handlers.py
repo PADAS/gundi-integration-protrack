@@ -1,9 +1,10 @@
 import pytest
 import httpx
+import json
 
 from math import ceil
 from datetime import datetime, timezone, timedelta
-from app.actions.client import DeviceResponse, PlaybackResponse
+from app.actions.client import DeviceResponse, PlaybackResponse, ProTrackUnauthorizedException
 from app.actions.handlers import action_auth, action_pull_observations, action_playback
 from app.actions.configurations import AuthenticateConfig, PullObservationsConfig, PlaybackConfig
 
@@ -82,7 +83,7 @@ async def test_action_pull_observations_no_devices(mocker, integration_v2, mock_
 
 @pytest.mark.asyncio
 async def test_action_pull_observations_auth_failure(mocker, integration_v2, mock_publish_event):
-    mocker.patch("app.actions.client.get_token", side_effect=Exception("Auth failed"))
+    mocker.patch("app.actions.client.get_token", side_effect=ProTrackUnauthorizedException(message="Auth failed", error=Exception()))
     mocker.patch("app.services.activity_logger.publish_event", mock_publish_event)
     mocker.patch("app.services.action_runner.publish_event", mock_publish_event)
     integration = integration_v2
@@ -91,7 +92,7 @@ async def test_action_pull_observations_auth_failure(mocker, integration_v2, moc
     integration.configurations[2].data = {"account": "user", "password": "pass"}
     action_config = PullObservationsConfig(default_lookback_days=5)
 
-    with pytest.raises(Exception, match="Auth failed"):
+    with pytest.raises(ProTrackUnauthorizedException, match="Auth failed"):
         await action_pull_observations(integration, action_config)
 
 @pytest.mark.asyncio
@@ -134,7 +135,21 @@ async def test_action_playback_no_observations(mocker, integration_v2, mock_publ
 
 @pytest.mark.asyncio
 async def test_action_playback_http_error(mocker, integration_v2, mock_publish_event):
-    mocker.patch("app.actions.client.get_playback_observations", side_effect=httpx.HTTPStatusError("Error", request=None, response=None))
+    error_body = {
+        "error": "Bad Request",
+        "code": 400,
+        "message": "Something went wrong"
+    }
+    response = httpx.Response(
+        status_code=400,
+        request=httpx.Request("POST", "https://example.com/api", json={"start_time": "2024-01-10T05:30:00-00:00"}),
+        content=json.dumps(error_body).encode("utf-8"),  # Convert dict to JSON string and encode
+        headers={"Content-Type": "application/json"}  # Ensure correct content type
+    )
+    mocker.patch(
+        "app.actions.client.get_playback_observations",
+        side_effect=httpx.HTTPStatusError("Error", request=response.request, response=response)
+    )
     mocker.patch("app.services.activity_logger.publish_event", mock_publish_event)
     mocker.patch("app.services.action_runner.publish_event", mock_publish_event)
 
