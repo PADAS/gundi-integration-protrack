@@ -2,8 +2,8 @@ import pytest
 import httpx
 import json
 
-from math import ceil
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
+from app import settings
 from app.actions.client import DeviceResponse, PlaybackResponse, ProTrackUnauthorizedException
 from app.actions.handlers import action_auth, action_pull_observations, action_playback
 from app.actions.configurations import AuthenticateConfig, PullObservationsConfig, PlaybackConfig
@@ -29,6 +29,8 @@ async def test_action_auth_bad_credentials(mocker):
 
 @pytest.mark.asyncio
 async def test_action_pull_observations_triggers_playback_action(mocker, integration_v2, mock_publish_event):
+    settings.TRIGGER_ACTIONS_ALWAYS_SYNC = False
+    settings.INTEGRATION_COMMANDS_TOPIC = "protrack-actions-topic"
     mocker.patch("app.actions.client.get_token", return_value="fake_token")
     mocker.patch("app.actions.client.get_devices", return_value=[
         DeviceResponse.parse_obj({"imei": "12345", "devicename": "device"})
