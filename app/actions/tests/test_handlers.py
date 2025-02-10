@@ -39,6 +39,7 @@ async def test_action_pull_observations_triggers_playback_action(mocker, integra
     mocker.patch("app.services.activity_logger.publish_event", mock_publish_event)
     mocker.patch("app.services.action_runner.publish_event", mock_publish_event)
     mocker.patch("app.services.action_scheduler.trigger_action", return_value=None)
+    mocker.patch("app.services.action_scheduler.publish_event", mock_publish_event)
     mock_trigger_action = mocker.patch("app.services.action_runner.execute_action", return_value=None)
 
     integration = integration_v2
