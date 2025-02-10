@@ -31,12 +31,11 @@ async def test_action_auth_bad_credentials(mocker):
 async def test_action_pull_observations_triggers_playback_action(mocker, integration_v2, mock_publish_event):
     settings.TRIGGER_ACTIONS_ALWAYS_SYNC = False
     settings.INTEGRATION_COMMANDS_TOPIC = "protrack-actions-topic"
+
     mocker.patch("app.actions.client.get_token", return_value="fake_token")
     mocker.patch("app.actions.client.get_devices", return_value=[
         DeviceResponse.parse_obj({"imei": "12345", "devicename": "device"})
     ])
-    mock_now = mocker.patch("app.actions.handlers.datetime")
-    mock_now.now.return_value = datetime.now(timezone.utc)
     mocker.patch("app.services.state.IntegrationStateManager.get_state", return_value=None)
     mocker.patch("app.services.activity_logger.publish_event", mock_publish_event)
     mocker.patch("app.services.action_runner.publish_event", mock_publish_event)
