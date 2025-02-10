@@ -25,7 +25,7 @@ def transform(device, observation):
     device_name = device_info.pop("devicename")
 
     return {
-        "name": device_name,
+        "source_name": device_name,
         "source": device_imei,
         "type": "tracking-device",
         "subject_type": "vehicle",
