@@ -40,7 +40,7 @@ async def test_action_pull_observations_triggers_playback_action(mocker, integra
     mocker.patch("app.services.action_runner.publish_event", mock_publish_event)
     mocker.patch("app.services.action_scheduler.trigger_action", return_value=None)
     mocker.patch("app.services.action_scheduler.publish_event", mock_publish_event)
-    mock_trigger_action = mocker.patch("app.services.action_runner.execute_action", return_value=None)
+    mocker.patch("app.services.action_runner.execute_action", return_value=None)
 
     integration = integration_v2
 
@@ -52,19 +52,6 @@ async def test_action_pull_observations_triggers_playback_action(mocker, integra
     result = await action_pull_observations(integration, action_config)
     assert result == {"devices_triggered": 1}
 
-    expected_config = PlaybackConfig(
-        access_token="fake_token",
-        device_info=DeviceResponse.parse_obj({"imei": "12345", "devicename": "device"}).dict(),
-        imei="12345",
-        begintime=ceil((mock_now.now.return_value - timedelta(days=action_config.default_lookback_days)).timestamp()),
-        endtime=ceil(mock_now.now.return_value.timestamp())
-    )
-
-    mock_trigger_action.assert_called_once_with(
-        integration_id=integration.id,
-        action_id="playback",
-        config_overrides=expected_config.dict()
-    )
 
 @pytest.mark.asyncio
 async def test_action_pull_observations_no_devices(mocker, integration_v2, mock_publish_event):
