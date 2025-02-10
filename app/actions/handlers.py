@@ -54,7 +54,7 @@ async def action_auth(integration, action_config: AuthenticateConfig):
         return {"error": True, "status_code": e.response.status_code}
 
 
-@activity_logger
+@activity_logger()
 async def action_pull_observations(integration, action_config: PullObservationsConfig):
     logger.info(f"Executing 'pull_observations' action with integration ID {integration.id} and action_config {action_config}...")
 
@@ -102,7 +102,7 @@ async def action_pull_observations(integration, action_config: PullObservationsC
         raise client.ProTrackUnauthorizedException(e, message)
 
 
-@activity_logger
+@activity_logger()
 async def action_playback(integration, action_config: PlaybackConfig):
     logger.info(f"Executing action 'playback' for integration ID {integration.id} and action_config {action_config}...")
 
