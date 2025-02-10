@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 state_manager = IntegrationStateManager()
 
 
+PROTRACK_ERROR_CODE_EXPIRED_TOKEN = 10012
+PROTRACK_MAX_OBSERVATIONS_RESPONSE = 1000
+
+
 # Pydantic models
 class DeviceResponse(pydantic.BaseModel):
     simcard: Optional[str]
@@ -135,7 +139,7 @@ async def get_devices(integration, base_url, auth):
         if parsed_response:
             code = parsed_response.get('code')
             if code != 0:
-                if code == 10012:
+                if code == PROTRACK_ERROR_CODE_EXPIRED_TOKEN:
                     # Token expired, remove it from state and retry
                     await state_manager.delete_state(
                         integration_id=integration.id,
@@ -169,7 +173,7 @@ async def get_playback_observations(integration, base_url, config):
             if parsed_response:
                 code = parsed_response.get('code')
                 if code != 0:
-                    if code == 10012:
+                    if code == PROTRACK_ERROR_CODE_EXPIRED_TOKEN:
                         # Token expired, remove it from state and retry
                         await state_manager.delete_state(
                             integration_id=integration.id,
@@ -183,10 +187,10 @@ async def get_playback_observations(integration, base_url, config):
                 extracted_obs.extend(obs)
 
                 # Check if there is more data to fetch
-                if len(obs) == 1000:
+                if len(obs) == PROTRACK_MAX_OBSERVATIONS_RESPONSE:
                     latest_timestamp = obs[-1].split(",")[2]
                     config.begintime = latest_timestamp
-                elif len(obs) < 1000:
+                elif len(obs) < PROTRACK_MAX_OBSERVATIONS_RESPONSE:
                     has_data = False
             else:
                 return response.text

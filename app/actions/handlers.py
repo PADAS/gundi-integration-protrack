@@ -100,10 +100,6 @@ async def action_pull_observations(integration, action_config: PullObservationsC
         message = f"Failed to authenticate with integration {integration.id} using {auth_config}. Exception: {e}"
         logger.exception(message)
         raise client.ProTrackUnauthorizedException(e, message)
-    except httpx.HTTPStatusError as e:
-        message = f"Error while executing 'pull_observations' for integration {integration.id}. Exception: {e}"
-        logger.exception(message)
-        raise e
 
 
 @activity_logger
@@ -120,19 +116,9 @@ async def action_playback(integration, action_config: PlaybackConfig):
             transformed_data = [transform(action_config.device_info, obs) for obs in observations]
 
             for i, batch in enumerate(generate_batches(transformed_data, 200)):
-                try:
-                    logger.info(f'Sending observations batch #{i}: {len(batch)} observations. Device: {action_config.imei}')
-                    response = await send_observations_to_gundi(observations=batch, integration_id=integration.id)
-                except httpx.HTTPError as e:
-                    msg = f'Sensors API returned error for integration_id: {str(integration.id)}. Exception: {e}'
-                    logger.exception(msg, extra={
-                        'needs_attention': True,
-                        'integration_id': integration.id,
-                        'action_id': "pull_observations"
-                    })
-                    raise e
-                else:
-                    observations_extracted += len(response)
+                logger.info(f'Sending observations batch #{i}: {len(batch)} observations. Device: {action_config.imei}')
+                response = await send_observations_to_gundi(observations=batch, integration_id=integration.id)
+                observations_extracted += len(response)
 
             # Save latest device updated_at
             latest_gpstime = max(observations, key=lambda obs: obs.gpstime).gpstime
