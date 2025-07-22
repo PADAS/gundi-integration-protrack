@@ -19,19 +19,19 @@ class AuthenticateConfig(AuthActionConfiguration, ExecutableActionMixin):
 
 class PullObservationsConfig(PullActionConfiguration):
     default_lookback_days: int = FieldWithUIOptions(
-        3,
+        2,
         title="Default Lookback Days",
         description="Initial number of days to look back for observations Min: 1, Default: 3",
         ge=1,
-        le=5,
+        le=3,
         ui_options=UIOptions(
-            widget="range",  # This will be rendered ad a range slider
+            widget="range",
         )
     )
 
 
 class PlaybackConfig(PullActionConfiguration):
-    access_token: str
+    access_token: str = None
     device_info: dict
     imei: str
     begintime: int

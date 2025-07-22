@@ -62,7 +62,6 @@ async def action_pull_observations(integration, action_config: PullObservationsC
     auth_config = get_auth_config(integration)
 
     try:
-        token = await client.get_token(integration, base_url, auth_config)
         devices = await client.get_devices(integration, base_url, auth_config)
         if devices:
             logger.info(f"Found {len(devices)} devices for integration {integration.id} Account: {auth_config.account}")
@@ -83,7 +82,6 @@ async def action_pull_observations(integration, action_config: PullObservationsC
                     begin_time = device_state.get("updated_at")
 
                 config = {
-                    "access_token": token,
                     "device_info": device.dict(),
                     "imei": device.imei,
                     "begintime": begin_time,
@@ -99,7 +97,7 @@ async def action_pull_observations(integration, action_config: PullObservationsC
     except client.ProTrackUnauthorizedException as e:
         message = f"Failed to authenticate with integration {integration.id} using {auth_config}. Exception: {e}"
         logger.exception(message)
-        raise client.ProTrackUnauthorizedException(e, message)
+        raise client.ProTrackUnauthorizedException(error=e, message=message)
 
 
 @activity_logger()
@@ -108,9 +106,10 @@ async def action_playback(integration, action_config: PlaybackConfig):
 
     base_url = integration.base_url or PROTRACK_BASE_URL
     observations_extracted = 0
+    auth_config = get_auth_config(integration)
 
     try:
-        observations = await client.get_playback_observations(integration, base_url, action_config)
+        observations = await client.get_playback_observations(integration, base_url, action_config, auth_config)
         if observations:
             logger.info(f"Extracted {len(observations)} observations for device {action_config.imei}")
             transformed_data = [transform(action_config.device_info, obs) for obs in observations]
@@ -142,4 +141,4 @@ async def action_playback(integration, action_config: PlaybackConfig):
     except client.ProTrackUnauthorizedException as e:
         message = f"Failed to authenticate with integration {integration.id}. Exception: {e}"
         logger.exception(message)
-        raise client.ProTrackUnauthorizedException(e, message)
+        raise client.ProTrackUnauthorizedException(error=e, message=message)

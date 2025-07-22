@@ -55,6 +55,14 @@ class ProTrackUnauthorizedException(Exception):
         super().__init__(f"'{self.status_code}: {self.message}, Error: {self.error}'")
 
 
+class ProTrackTokenExpiredException(Exception):
+    def __init__(self, error: Exception, message: str, status_code=PROTRACK_ERROR_CODE_EXPIRED_TOKEN):
+        self.status_code = status_code
+        self.message = message
+        self.error = error
+        super().__init__(f"'{self.status_code}: {self.message}, Error: {self.error}'")
+
+
 def generate_md5_hash(input_string):
     md5_hash = hashlib.md5()
     md5_hash.update(input_string.encode('utf-8'))
@@ -74,7 +82,7 @@ async def get_token(integration, base_url, auth):
             if not token:
                 message = f"Failed to authenticate with integration {integration.id} using {auth}"
                 logger.error(message)
-                raise ProTrackUnauthorizedException(message)
+                raise ProTrackUnauthorizedException(error=Exception(), message=message)
             await state_manager.set_state(
                 integration_id=integration.id,
                 action_id="pull_observations",
@@ -118,7 +126,7 @@ async def get_auth_response(integration_id, url, auth):
             return response.text
 
 
-@stamina.retry(on=httpx.HTTPError, wait_initial=4.0, wait_jitter=5.0, wait_max=32.0)
+@stamina.retry(on=(httpx.HTTPError, ProTrackTokenExpiredException), wait_initial=4.0, wait_jitter=5.0, wait_max=32.0, attempts=2)
 async def get_devices(integration, base_url, auth):
     async with httpx.AsyncClient(timeout=120) as session:
         logger.info(f"-- Getting devices for integration ID: {integration.id} Account: {auth.account} --")
@@ -146,7 +154,10 @@ async def get_devices(integration, base_url, auth):
                         action_id="pull_observations",
                         source_id="token"
                     )
-                    return await get_devices(integration, base_url, auth)
+                    raise ProTrackTokenExpiredException(
+                        error=Exception(),
+                        message=f"Token expired. Integration {integration.id}"
+                    )
                 logger.error(f"{devices_url} returned error: {parsed_response.get('message')}")
                 return None
             return [DeviceResponse.parse_obj(item) for item in parsed_response.get('record')]
@@ -154,13 +165,16 @@ async def get_devices(integration, base_url, auth):
             return response.text
 
 
-@stamina.retry(on=httpx.HTTPError, wait_initial=4.0, wait_jitter=5.0, wait_max=32.0)
-async def get_playback_observations(integration, base_url, config):
+@stamina.retry(on=(httpx.HTTPError, ProTrackTokenExpiredException), wait_initial=4.0, wait_jitter=5.0, wait_max=32.0, attempts=2)
+async def get_playback_observations(integration, base_url, config, auth):
     async with httpx.AsyncClient(timeout=120) as session:
         extracted_obs = []
 
         playback_url = f"{base_url}/playback"
         has_data = True
+
+        token = await get_token(integration, base_url, auth)
+        config.access_token = token
 
         while has_data:
             logger.info(f"-- Getting playback observations for integration ID: {integration.id} Device: {config.imei} --")
@@ -180,7 +194,10 @@ async def get_playback_observations(integration, base_url, config):
                             action_id="pull_observations",
                             source_id="token"
                         )
-                        return await get_playback_observations(integration, base_url, config)
+                        raise ProTrackTokenExpiredException(
+                            error=Exception(),
+                            message=f"Token expired. Integration {integration.id}"
+                        )
                     logger.error(f"{playback_url} returned error: {parsed_response.get('message')}")
                     return None
                 obs = parsed_response.get('record').split(";") if parsed_response.get('record') else []
