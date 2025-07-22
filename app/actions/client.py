@@ -149,6 +149,7 @@ async def get_devices(integration, base_url, auth):
             if code != 0:
                 if code == PROTRACK_ERROR_CODE_EXPIRED_TOKEN:
                     # Token expired, remove it from state and retry
+                    logger.info("Token expired, remove it from state and retry...")
                     await state_manager.delete_state(
                         integration_id=integration.id,
                         action_id="pull_observations",
@@ -216,4 +217,5 @@ async def get_playback_observations(integration, base_url, config, auth):
         keys = ["longitude", "latitude", "gpstime", "speed", "course"]
         parsed_obs = [PlaybackResponse.parse_obj(dict(zip(keys, obs))) for obs in extracted_obs]
 
-        return parsed_obs
+        # Get only the number of records set in max_observations value within the playback config
+        return sorted(parsed_obs, key=lambda x: x.gpstime, reverse=True)[:config.max_observations]

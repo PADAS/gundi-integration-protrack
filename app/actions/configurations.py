@@ -19,11 +19,11 @@ class AuthenticateConfig(AuthActionConfiguration, ExecutableActionMixin):
 
 class PullObservationsConfig(PullActionConfiguration):
     default_lookback_days: int = FieldWithUIOptions(
-        2,
+        3,
         title="Default Lookback Days",
         description="Initial number of days to look back for observations Min: 1, Default: 3",
         ge=1,
-        le=3,
+        le=5,
         ui_options=UIOptions(
             widget="range",
         )
@@ -36,6 +36,7 @@ class PlaybackConfig(PullActionConfiguration):
     imei: str
     begintime: int
     endtime: int
+    max_observations: int = 1000
 
 
 def get_auth_config(integration):
