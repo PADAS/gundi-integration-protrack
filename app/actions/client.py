@@ -155,10 +155,7 @@ async def get_devices(integration, base_url, auth):
                         action_id="pull_observations",
                         source_id="token"
                     )
-                    raise ProTrackTokenExpiredException(
-                        error=Exception(),
-                        message=f"Token expired. Integration {integration.id}"
-                    )
+                    raise ProTrackTokenExpiredException(message=f"Token expired. Integration {integration.id}")
                 logger.error(f"{devices_url} returned error: {parsed_response.get('message')}")
                 return None
             return [DeviceResponse.parse_obj(item) for item in parsed_response.get('record')]
@@ -195,10 +192,7 @@ async def get_playback_observations(integration, base_url, config, auth):
                             action_id="pull_observations",
                             source_id="token"
                         )
-                        raise ProTrackTokenExpiredException(
-                            error=Exception(),
-                            message=f"Token expired. Integration {integration.id}"
-                        )
+                        raise ProTrackTokenExpiredException(message=f"Token expired. Integration {integration.id}")
                     logger.error(f"{playback_url} returned error: {parsed_response.get('message')}")
                     return None
                 obs = parsed_response.get('record').split(";") if parsed_response.get('record') else []
