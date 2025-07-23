@@ -48,7 +48,7 @@ class PlaybackResponse(pydantic.BaseModel):
 
 
 class ProTrackUnauthorizedException(Exception):
-    def __init__(self, error: Exception, message: str, status_code=401):
+    def __init__(self, message: str, error: Exception = None, status_code=401):
         self.status_code = status_code
         self.message = message
         self.error = error
@@ -56,7 +56,7 @@ class ProTrackUnauthorizedException(Exception):
 
 
 class ProTrackTokenExpiredException(Exception):
-    def __init__(self, error: Exception, message: str, status_code=PROTRACK_ERROR_CODE_EXPIRED_TOKEN):
+    def __init__(self, message: str, error: Exception = None, status_code=PROTRACK_ERROR_CODE_EXPIRED_TOKEN):
         self.status_code = status_code
         self.message = message
         self.error = error
@@ -82,7 +82,7 @@ async def get_token(integration, base_url, auth):
             if not token:
                 message = f"Failed to authenticate with integration {integration.id} using {auth}"
                 logger.error(message)
-                raise ProTrackUnauthorizedException(error=Exception(), message=message)
+                raise ProTrackUnauthorizedException(message)
             await state_manager.set_state(
                 integration_id=integration.id,
                 action_id="pull_observations",

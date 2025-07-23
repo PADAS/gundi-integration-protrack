@@ -97,7 +97,7 @@ async def action_pull_observations(integration, action_config: PullObservationsC
     except client.ProTrackUnauthorizedException as e:
         message = f"Failed to authenticate with integration {integration.id} using {auth_config}. Exception: {e}"
         logger.exception(message)
-        raise client.ProTrackUnauthorizedException(error=e, message=message)
+        raise
 
 
 @activity_logger()
@@ -141,4 +141,4 @@ async def action_playback(integration, action_config: PlaybackConfig):
     except client.ProTrackUnauthorizedException as e:
         message = f"Failed to authenticate with integration {integration.id}. Exception: {e}"
         logger.exception(message)
-        raise client.ProTrackUnauthorizedException(error=e, message=message)
+        raise
