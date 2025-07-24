@@ -105,6 +105,7 @@ async def test_action_playback_extracts_observations(
     mocker.patch("app.services.state.IntegrationStateManager.set_state", return_value=None)
 
     integration = integration_v2
+    integration.configurations[2].data = {"account": "user", "password": "pass"}
     action_config = PlaybackConfig(access_token="fake_token", device_info={"imei": "12345", "devicename": "device"}, imei="12345", begintime=0, endtime=0)
 
     result = await action_playback(integration, action_config)
@@ -117,6 +118,7 @@ async def test_action_playback_no_observations(mocker, integration_v2, mock_publ
     mocker.patch("app.services.action_runner.publish_event", mock_publish_event)
 
     integration = integration_v2
+    integration.configurations[2].data = {"account": "user", "password": "pass"}
     action_config = PlaybackConfig(access_token="fake_token", device_info={"imei": "12345"}, imei="12345", begintime=0, endtime=0)
 
     result = await action_playback(integration, action_config)
@@ -143,6 +145,7 @@ async def test_action_playback_http_error(mocker, integration_v2, mock_publish_e
     mocker.patch("app.services.action_runner.publish_event", mock_publish_event)
 
     integration = integration_v2
+    integration.configurations[2].data = {"account": "user", "password": "pass"}
     action_config = PlaybackConfig(access_token="fake_token", device_info={"imei": "12345"}, imei="12345", begintime=0, endtime=0)
 
     with pytest.raises(httpx.HTTPStatusError):

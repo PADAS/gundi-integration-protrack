@@ -25,17 +25,18 @@ class PullObservationsConfig(PullActionConfiguration):
         ge=1,
         le=5,
         ui_options=UIOptions(
-            widget="range",  # This will be rendered ad a range slider
+            widget="range",
         )
     )
 
 
 class PlaybackConfig(PullActionConfiguration):
-    access_token: str
+    access_token: str = None
     device_info: dict
     imei: str
     begintime: int
     endtime: int
+    max_observations: int = 1000
 
 
 def get_auth_config(integration):
